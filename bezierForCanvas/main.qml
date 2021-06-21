@@ -1,4 +1,4 @@
-import QtQuick 2.15
+import QtQuick 2.12
 import QtQuick.Window 2.12
 import QtQuick.Controls 2.5
 Window {
@@ -7,13 +7,10 @@ Window {
     visible: true
     title: qsTr("Hello World")
     id: my_window
-
-
-
-
-
     Canvas{
-        property var t : 0 //贝塞尔函数涉及的占比比例，0<=t<=1
+        anchors.fill: parent
+        id:canvas
+
         property var clickNodes : [] //点击的控制点对象数组
         property var bezierNodes : [] //绘制内部控制点的数组
         property bool isPrinted : false //当前存在绘制的曲线
@@ -27,8 +24,37 @@ Window {
 
         property var currentNodeX
         property var currentNodeY
-        anchors.fill: parent
-        id:canvas
+        property bool isDrawBezierBtn: false
+
+        function factorial(num){
+            if (num <= 1) {
+                    return 1;
+                } else {
+                    return num * this.factorial(num - 1);
+                }
+        }
+
+        function bezier(t){
+            var x = 0,
+                y = 0,
+                bezierCtrlNodesArr = canvas.clickNodes,
+                n = bezierCtrlNodesArr.length - 1
+            bezierCtrlNodesArr.forEach(function(item, index) {
+                   if(!index) {
+                       x += item.x * Math.pow(( 1 - t ), n - index) * Math.pow(t, index)
+                       y += item.y * Math.pow(( 1 - t ), n - index) * Math.pow(t, index)
+                   } else {
+                       x += factorial(n) / factorial(index) / factorial(n - index) * item.x * Math.pow(( 1 - t ), n - index) * Math.pow(t, index)
+                       y += factorial(n) / factorial(index) / factorial(n - index) * item.y * Math.pow(( 1 - t ), n - index) * Math.pow(t, index)
+                   }
+               })
+               return {
+                   x: x,
+                   y: y
+               }
+
+        }
+
 
         onPaint: {
             var ctx = getContext("2d")
@@ -40,7 +66,7 @@ Window {
                 ctx.fillText("p" + i, x, y + 20)
                 ctx.fillText("p" + i + ': ('+ x +', '+ y +')', 10, i * 20)
                 ctx.beginPath()
-                ctx.arc(x, y, 4, 0, Math.PI * 2, false)
+                ctx.arc(x, y, 8, 0, Math.PI * 2, false)
                 ctx.fill()
                 ctx.beginPath()
                 ctx.moveTo(startX, startY)
@@ -48,8 +74,8 @@ Window {
                 ctx.strokeStyle = '#696969'
                 ctx.stroke()
                 if (index) {
-                    var startX = clickNodes[index - 1].x,
-                    startY = clickNodes[index - 1].y
+                    var startX = canvas.clickNodes[index - 1].x,
+                    startY = canvas.clickNodes[index - 1].y
                     ctx.beginPath()
                     ctx.moveTo(startX, startY)
                     ctx.lineTo(x, y)
@@ -57,10 +83,37 @@ Window {
                 }
             })
 
+            if(canvas.num == 0){
+                return
+            }
 
-
-
-
+            if( canvas.isDrawBezierBtn){
+                canvas.isPrinting = true
+//                drawBezier_(ctx, canvas.clickNodes)
+                console.log("canvas.clickNodes size " + canvas.clickNodes.length)
+                if(canvas.clickNodes.length)
+                {
+                    var bezierArr = []
+                    for(var i = 0; i < 1; i+=0.005)
+                    {
+                        bezierArr.push(bezier(i))
+                    }
+                }
+                console.log(bezierArr.length)
+                bezierArr.forEach(function(obj, index) {
+                            if (index) {
+                                var startX = bezierArr[index - 1].x,
+                                    startY = bezierArr[index - 1].y,
+                                    x = obj.x,
+                                    y = obj.y
+                                ctx.beginPath()
+                                ctx.moveTo(startX, startY)
+                                ctx.lineTo(x, y)
+                                ctx.strokeStyle = "blue"
+                                ctx.stroke()
+                            }
+                        })
+            }
         }
 
         MouseArea{
@@ -79,19 +132,23 @@ Window {
                     if(absX < 5 && absY < 5){
                         canvas.isDragNode = true
                         canvas.dragIndex = index
+                        console.log("choose " + index)
                     }
 
-                }
-                )
-
-
+                })
             }
 
             onReleased: {
+                if(canvas.isDragNode)
+                {
+                    canvas.clickNodes[canvas.dragIndex].x = mouseX
+                    canvas.clickNodes[canvas.dragIndex].y = mouseY
+                    canvas.requestPaint()
+
+                }
                 canvas.isDrag = false
                 canvas.isDragNode = false
                 canvas.clickoff = new Date().getTime()
-
                 if (canvas.clickoff - canvas.clickon < 200){
 
                     var x = mouseX
@@ -101,40 +158,44 @@ Window {
                     if(!canvas.isPrinted && !canvas.isDragNode){
                         canvas.num++
                         console.log("add new point")
-                        canvas.clickNodes.push({x:x,
-                                                   y:y
+                        canvas.clickNodes.push({x:x,y:y
                                                })
                     }
 
-
                     canvas.requestPaint()
                 }
-
-
             }
 
             Button {
-                id: button
+                id: drawBezier
                 x: 485
-                y: 57
-                text: qsTr("Button")
+                text: qsTr("drawBezier")
+                anchors.right: parent.right
+                anchors.top: parent.top
+                anchors.topMargin: 10
+                anchors.rightMargin: 5
+                onPressed: {
+                    canvas.isDrawBezierBtn = true
+
             }
+                onReleased: {
+                    canvas.requestPaint()
+                }
+                }
 
             Button {
-                id: button1
+                id: stopDraw
                 x: 485
-                y: 117
-                text: qsTr("Button")
+                text: qsTr("stopDraw")
+                anchors.right: drawBezier.left
+                anchors.top: drawBezier.bottom
+                anchors.topMargin: 10
+                anchors.rightMargin: -100
+                onPressed:{
+                    canvas.isDrawBezierBtn = false
+                }
             }
-
-
-
-
-
 
         }
-
-
-
     }
 }
