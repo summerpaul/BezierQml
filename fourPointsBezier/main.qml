@@ -48,8 +48,8 @@ Window {
                 ctx.stroke()
                 ctx.closePath()
                 if (index) {
-                    var startX = canvas.clickNodes[index - 1].x,
-                    startY = canvas.clickNodes[index - 1].y
+                    var startX = clickNodes[index - 1].x,
+                    startY = clickNodes[index - 1].y
                     ctx.beginPath()
                     ctx.moveTo(startX, startY)
                     ctx.lineTo(x, y)
@@ -72,8 +72,8 @@ Window {
                 ctx.fill()
                 ctx.stroke()
                 if (index) {
-                    var startX = canvas.clickNodes[index - 1].x,
-                    startY = canvas.clickNodes[index - 1].y
+                    var startX = controlNodes[index - 1].x,
+                    startY = controlNodes[index - 1].y
                     ctx.beginPath()
                     ctx.moveTo(startX, startY)
                     ctx.lineTo(x, y)
@@ -84,6 +84,22 @@ Window {
             ctx.closePath()
 
             //绘制bezier曲线
+            var bezierNodes = Util.getBezier(controlNodes);
+            bezierNodes.forEach(function(item, index){
+                var x = item.x,
+                y = item.y,
+                yaw = item.yaw
+                if (index) {
+                    var startX = bezierNodes[index - 1].x,
+                    startY = bezierNodes[index - 1].y
+                    ctx.beginPath()
+                    ctx.moveTo(startX, startY)
+                    ctx.lineTo(x, y)
+                    ctx.stroke()
+                }
+
+            })
+
 
 
         }//paint
@@ -120,6 +136,12 @@ Window {
                 {
                     parent.clickNodes[parent.dragIndex].x = mouseX
                     parent.clickNodes[parent.dragIndex].y = mouseY
+                    if(parent.isFourBezier)
+                    {
+                        parent.controlNodes = Util.calFourControlPoint(parent.clickNodes, offset.value * 10)
+
+                    }
+
                     parent.requestPaint()//完成拖拽后绘制拖拽后的点
                 }
                 if(parent.isMultiBezier || (parent.isFourBezier && parent.num < 2))
@@ -172,28 +194,15 @@ Window {
                     {
                         return;
                     }
-
-                    var dist =Util.point2point(parent.clickNodes[0].x, parent.clickNodes[1].x, parent.clickNodes[0].y, parent.clickNodes[1].y) / parent.offset
-                    parent.controlNodes.push(parent.clickNodes[0])
-                    parent.controlNodes.push({x:parent.clickNodes[0].x + dist *Math.cos(parent.clickNodes[0].yaw),
-                                              y:parent.clickNodes[0].y + dist * Math.sin(parent.clickNodes[0].yaw),
-                                              yaw:0
-
-                                             })
-                    parent.controlNodes.push({x:parent.clickNodes[1].x - dist *Math.cos(parent.clickNodes[1].yaw),
-                                              y:parent.clickNodes[1].y - dist * Math.sin(parent.clickNodes[1].yaw),
-                                              yaw:0
-                                             })
-                    parent.controlNodes.push(parent.clickNodes[1])
-
-
-
+                    parent.controlNodes = Util.calFourControlPoint(parent.clickNodes, offset.value * 10)
                 }
 
                 parent.isDrag = false
                 parent.isDragNode = false
                 parent.requestPaint()
-            } //onRelease
+            }
+
+       //onRelease
         }//MouseArea
 
         Button {
@@ -217,6 +226,7 @@ Window {
                     text=qsTr("fourBezier")
 
                 }
+                console.log(parent.num)
 
             }
         }
@@ -253,6 +263,27 @@ Window {
                     text=qsTr("multiBezier")
 
                 }
+
+            }
+        }
+        Slider {
+            id: offset
+            x: 558
+            anchors.right: parent.right
+            anchors.top: parent.top
+            anchors.topMargin: 192
+            anchors.rightMargin: 42
+            orientation: Qt.Vertical
+            value: 0.5
+            onValueChanged: {
+                if(parent.isFourBezier)
+                {
+
+                    parent.controlNodes = Util.calFourControlPoint(parent.clickNodes, value * 10)
+                    parent.requestPaint()
+
+                }
+
 
             }
         }
