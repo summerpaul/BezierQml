@@ -30,7 +30,7 @@ Window {
             if (num <= 1) {
                     return 1;
                 } else {
-                    return num * this.factorial(num - 1);
+                    return num * factorial(num - 1);
                 }
         }
 
@@ -62,12 +62,20 @@ Window {
             canvas.clickNodes.forEach(function(item, index) {
                 var x = item.x,
                 y = item.y,
+                yaw = item.yaw,
                 i = parseInt(index, 10) + 1
                 ctx.fillText("p" + i, x, y + 20)
                 ctx.fillText("p" + i + ': ('+ x +', '+ y +')', 10, i * 20)
                 ctx.beginPath()
                 ctx.arc(x, y, 8, 0, Math.PI * 2, false)
                 ctx.fill()
+                ctx.beginPath()
+                ctx.moveTo(x, y)
+                ctx.strokeStyle = 'white'
+                ctx.lineTo(x + 8 * Math.cos(yaw), y + 8 * Math.sin(yaw))
+                ctx.lineWidth = 3;
+                ctx.stroke()
+
                 ctx.beginPath()
                 ctx.moveTo(startX, startY)
                 ctx.lineTo(x, y)
@@ -124,12 +132,14 @@ Window {
                 canvas.clickon = new Date().getTime()
                 var x = mouseX
                 var y = mouseY
+                canvas.currentNodeX = x
+                canvas.currentNodeY = y
 
                 canvas.clickNodes.forEach(function(item, index){
                     var absX = Math.abs(item.x - x)
                     var absY = Math.abs(item.y - y)
 
-                    if(absX < 5 && absY < 5){
+                    if(absX < 8 && absY < 8){
                         canvas.isDragNode = true
                         canvas.dragIndex = index
                         console.log("choose " + index)
@@ -146,24 +156,34 @@ Window {
                     canvas.requestPaint()
 
                 }
-                canvas.isDrag = false
-                canvas.isDragNode = false
+
                 canvas.clickoff = new Date().getTime()
                 if (canvas.clickoff - canvas.clickon < 200){
 
-                    var x = mouseX
-                    var y = mouseY
-                    canvas.currentNodeX = x
-                    canvas.currentNodeY = y
                     if(!canvas.isPrinted && !canvas.isDragNode){
                         canvas.num++
                         console.log("add new point")
-                        canvas.clickNodes.push({x:x,y:y
+                        canvas.clickNodes.push({x:canvas.currentNodeX,y:canvas.currentNodeY,yaw:0
                                                })
                     }
+                    canvas.isDrag = false
+                    canvas.isDragNode = false
 
                     canvas.requestPaint()
                 }
+                else if(!canvas.isDragNode){
+                    var yaw =Math.atan2(mouseY- canvas.currentNodeY, mouseX - canvas.currentNodeX)
+                    console.log(yaw)
+                    canvas.clickNodes.push({x:canvas.currentNodeX,y:canvas.currentNodeY,yaw:yaw
+                                           })
+                    canvas.isDrag = false
+                    canvas.isDragNode = false
+                    canvas.requestPaint()
+
+
+                }
+
+
             }
 
             Button {
@@ -193,6 +213,19 @@ Window {
                 anchors.rightMargin: -100
                 onPressed:{
                     canvas.isDrawBezierBtn = false
+                }
+            }
+
+            Button {
+                id: clearBtn
+                x: 535
+                text: qsTr("clear")
+                anchors.right: stopDraw.left
+                anchors.top: stopDraw.bottom
+                anchors.rightMargin: -100
+                anchors.topMargin: 22
+                onClicked: {
+
                 }
             }
 
