@@ -1,0 +1,21 @@
+<RCC>
+    <qresource prefix="/">
+        <file>main.qml</file>
+        <file>maps/test_map.yaml</file>
+        <file>maps/test_map.pgm</file>
+        <file>maps/room.yaml</file>
+        <file>maps/room.pgm</file>
+        <file>maps/hector_map.yaml</file>
+        <file>maps/hector_map.pgm</file>
+        <file>maps/gmapping_map.yaml</file>
+        <file>maps/gmapping_map.pgm</file>
+        <file>maps/cloister_hector.yaml</file>
+        <file>maps/cloister_hector.pgm</file>
+        <file>maps/cloister_gmapping.yaml</file>
+        <file>maps/cloister_gmapping.pgm</file>
+        <file>maps/blank_map_with_obstacle.yaml</file>
+        <file>maps/blank_map_with_obstacle.pgm</file>
+        <file>maps/blank_map.yaml</file>
+        <file>maps/blank_map.pgm</file>
+    </qresource>
+</RCC>

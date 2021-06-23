@@ -1,6 +1,5 @@
 function drawNodes(ctx, nodes, circleRarius, lineWidth, lineColor, circleColor, isKeyNodes)
 {
-    console.log("draw nodes")
     nodes.forEach(function(item, index){
         var x = item.x,
         y = item.y,
@@ -14,11 +13,9 @@ function drawNodes(ctx, nodes, circleRarius, lineWidth, lineColor, circleColor, 
 
         if(isKeyNodes)
         {
-            console.log("draw key nodes")
             ctx.beginPath()
             ctx.moveTo(x, y)
             ctx.lineTo(x + circleRarius * Math.cos(yaw), y + circleRarius* Math.sin(yaw))
-//            ctx.closePath()
         }
         ctx.stroke()
     })
