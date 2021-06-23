@@ -36,12 +36,15 @@ Window {
         property var offset: 3.0
 
         onPaint: {//绘制点与曲线
+            if(num ==0)
+            {
+                return
+            }
+
             var ctx = getContext("2d")
             ctx.clearRect(0, 0, width, height)
             //绘制点击点
             Draw.drawNodes(ctx, clickNodes,clickNodeRadius, 1, "blue", "blue",false)
-
-
             //绘制控制点
 //            Draw.drawNodes(ctx, controlNodes, 4, )
             Draw.drawNodes(ctx, controlNodes,controlNodeRadius, 1, "green", "green",false)
@@ -49,18 +52,12 @@ Window {
             var bezierNodes = Util.getBezier(controlNodes);
             Draw.drawLine(ctx, bezierNodes, 1, "red")
             Draw.drawNodes(ctx, keyNodes, keyNodeRadius, 2, "blue", "red", true)
-
-
-
         }//paint
-
 
         MouseArea{ //鼠标操作
             id:mouseArea
             anchors.fill: parent
-
             onPressed: { // 单击鼠标的操作
-                //
                 parent.isDrag = true // 表示进入拖拽或绘制点
                 parent.clickon = new Date().getTime()//鼠标单击时候的时间戳
                 parent.currentNodeX = mouseX
@@ -70,7 +67,6 @@ Window {
                 parent.clickNodes.forEach(function(item, index){
                     var absX = Math.abs(item.x - mouseX)
                     var absY = Math.abs(item.y - mouseY)
-
                     if(absX < parent.keyNodeRadius && absY < parent.keyNodeRadius) // 确定拖拽的点
                     {
                         parent.isDragNode = true
@@ -117,19 +113,6 @@ Window {
                             var yaw =Math.atan2(mouseY- canvas.currentNodeY, mouseX - canvas.currentNodeX)
                             yaw = Util.getYaw(yaw)
                             console.log("yaw = " + yaw)
-                            if(-Math.PI* 0.25 < yaw && yaw <=Math.PI * 0.25)
-                            {
-                                yaw =0
-                            }
-                            else if(Math.PI* 0.25 < yaw && yaw <=Math.PI * 0.75)
-                            {
-                                yaw = 0.5 * Math.PI
-
-                            }
-                            else if (Math.PI*0.75 < yaw && yaw <=Math.PI*1.25 )
-                            {
-                                yaw = Math.PI
-                            }
 
                             parent.clickNodes.push({x:parent.currentNodeX,
                                                        y:parent.currentNodeY,
@@ -144,9 +127,13 @@ Window {
 
 
 
-                if(parent.isMultiBezier)
+                if(parent.isMultiBezier && !parent.isFourBezier)
                 {
                     parent.controlNodes = parent.clickNodes
+                    parent.keyNodes=[]
+                    var length = parent.clickNodes.length
+                    parent.keyNodes.push(parent.clickNodes[0])
+                    parent.keyNodes.push(parent.clickNodes[length-1])
                 }
                 else if(parent.isFourBezier && !parent.isMultiBezier)
                 {
@@ -247,6 +234,10 @@ Window {
             onValueChanged: {
                 if(parent.isFourBezier)
                 {
+                    if(parent.num < 2)
+                    {
+                        return
+                    }
 
                     parent.controlNodes = Util.calFourControlPoint(parent.clickNodes, value * 10)
                     parent.requestPaint()

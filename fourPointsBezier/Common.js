@@ -1,7 +1,3 @@
-.pragma library
-
-var scope = {
-}
 
 function point2point(x1, x2, y1, y2)
 {
