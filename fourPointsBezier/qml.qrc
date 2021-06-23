@@ -2,5 +2,6 @@
     <qresource prefix="/">
         <file>main.qml</file>
         <file>Common.js</file>
+        <file>Draw.js</file>
     </qresource>
 </RCC>

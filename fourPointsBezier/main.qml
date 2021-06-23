@@ -2,7 +2,7 @@ import QtQuick 2.12
 import QtQuick.Window 2.12
 import QtQuick.Controls 2.12
 import "Common.js" as Util
-
+import "Draw.js" as Draw
 
 Window {
     width: 640
@@ -28,7 +28,9 @@ Window {
 
         property var currentNodeX //获取鼠标点击时刻的x坐标
         property var currentNodeY //获取鼠标点击时刻的Y坐标
-        property var nodeRadius: 8 //绘制点圆的半径
+        property var clickNodeRadius: 4 //绘制点圆的半径
+        property var controlNodeRadius: 3
+        property var keyNodeRadius: 8
         property bool isMultiBezier: false
         property bool isFourBezier: false
         property var offset: 3.0
@@ -36,69 +38,17 @@ Window {
         onPaint: {//绘制点与曲线
             var ctx = getContext("2d")
             ctx.clearRect(0, 0, width, height)
+            //绘制点击点
+            Draw.drawNodes(ctx, clickNodes,clickNodeRadius, 1, "blue", "blue",false)
+
+
             //绘制控制点
-            clickNodes.forEach(function(item, index){
-                var x = item.x,
-                y = item.y,
-                yaw = item.yaw
-                ctx.beginPath()
-                ctx.arc(x, y, 8, 0, Math.PI * 2,  true)
-                ctx.fillStyle = 'blue'
-                ctx.fill()
-                ctx.stroke()
-                ctx.closePath()
-                if (index) {
-                    var startX = clickNodes[index - 1].x,
-                    startY = clickNodes[index - 1].y
-                    ctx.beginPath()
-                    ctx.moveTo(startX, startY)
-                    ctx.lineTo(x, y)
-                    ctx.stroke()
-                }
-//
-
-            })
-
-            //绘制关键点
-//            var ctx2 = getContext("2d")
-            controlNodes.forEach(function(item, index){
-                var x = item.x,
-                y = item.y,
-                yaw = item.yaw
-                ctx.beginPath()
-//                ctx.strokeStyle = "blue"
-                ctx.arc(x, y, nodeRadius +2 , 0, Math.PI * 2,  true)
-                ctx.fillStyle = 'green'
-                ctx.fill()
-                ctx.stroke()
-                if (index) {
-                    var startX = controlNodes[index - 1].x,
-                    startY = controlNodes[index - 1].y
-                    ctx.beginPath()
-                    ctx.moveTo(startX, startY)
-                    ctx.lineTo(x, y)
-                    ctx.stroke()
-                }
-
-            })
-            ctx.closePath()
-
+//            Draw.drawNodes(ctx, controlNodes, 4, )
+            Draw.drawNodes(ctx, controlNodes,controlNodeRadius, 1, "green", "green",false)
             //绘制bezier曲线
             var bezierNodes = Util.getBezier(controlNodes);
-            bezierNodes.forEach(function(item, index){
-                var x = item.x,
-                y = item.y,
-                yaw = item.yaw
-                if (index) {
-                    var startX = bezierNodes[index - 1].x,
-                    startY = bezierNodes[index - 1].y
-                    ctx.beginPath()
-                    ctx.moveTo(startX, startY)
-                    ctx.lineTo(x, y)
-                    ctx.stroke()
-                }
-
-            })
+            Draw.drawLine(ctx, bezierNodes, 1, "red")
+            Draw.drawNodes(ctx, keyNodes, keyNodeRadius, 2, "blue", "red", true)
 
 
 
@@ -121,7 +71,7 @@ Window {
                     var absX = Math.abs(item.x - mouseX)
                     var absY = Math.abs(item.y - mouseY)
 
-                    if(absX < parent.nodeRadius && absY < parent.nodeRadius) // 确定拖拽的点
+                    if(absX < parent.keyNodeRadius && absY < parent.keyNodeRadius) // 确定拖拽的点
                     {
                         parent.isDragNode = true
                         parent.dragIndex = index //拖拽点的id
@@ -165,9 +115,20 @@ Window {
                         else{
                             parent.num++
                             var yaw =Math.atan2(mouseY- canvas.currentNodeY, mouseX - canvas.currentNodeX)
+                            yaw = Util.getYaw(yaw)
+                            console.log("yaw = " + yaw)
                             if(-Math.PI* 0.25 < yaw && yaw <=Math.PI * 0.25)
                             {
                                 yaw =0
+                            }
+                            else if(Math.PI* 0.25 < yaw && yaw <=Math.PI * 0.75)
+                            {
+                                yaw = 0.5 * Math.PI
+
+                            }
+                            else if (Math.PI*0.75 < yaw && yaw <=Math.PI*1.25 )
+                            {
+                                yaw = Math.PI
                             }
 
                             parent.clickNodes.push({x:parent.currentNodeX,
@@ -187,7 +148,7 @@ Window {
                 {
                     parent.controlNodes = parent.clickNodes
                 }
-                else if(parent.isFourBezier)
+                else if(parent.isFourBezier && !parent.isMultiBezier)
                 {
                     console.log("in isFourBezier")
                     if(parent.num < 2)
@@ -195,6 +156,7 @@ Window {
                         return;
                     }
                     parent.controlNodes = Util.calFourControlPoint(parent.clickNodes, offset.value * 10)
+                    parent.keyNodes = parent.clickNodes
                 }
 
                 parent.isDrag = false
@@ -240,6 +202,13 @@ Window {
             anchors.top: parent.top
             anchors.rightMargin: 16
             anchors.topMargin: 133
+            onClicked: {
+                parent.clickNodes=[] //鼠标点击的点
+                parent.controlNodes= [] // bezier中的控制点
+                parent.keyNodes= [] //bezier中的关键点
+                parent.num = 0 // bezier控制点的数目
+                parent.requestPaint()
+            }
         }
 
         Button {
