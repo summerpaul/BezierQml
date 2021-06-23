@@ -9,11 +9,7 @@ Window {
     height: 480
     visible: true
     title: qsTr("Hello World")
-
-
-
     Canvas{
-
         anchors.fill: parent
         id:canvas
         property var clickNodes: [] //鼠标点击的点
@@ -25,7 +21,6 @@ Window {
         property int dragIndex : 0 //被拖拽的点的索引
         property var clickon : 0 //鼠标按下时间戳
         property var clickoff : 0 //鼠标抬起
-
         property var currentNodeX //获取鼠标点击时刻的x坐标
         property var currentNodeY //获取鼠标点击时刻的Y坐标
         property var clickNodeRadius: 4 //绘制点圆的半径
@@ -34,26 +29,19 @@ Window {
         property bool isMultiBezier: false
         property bool isFourBezier: false
         property var offset: 3.0
-
         onPaint: {//绘制点与曲线
             if(num ==0)
             {
                 return
             }
-
             var ctx = getContext("2d")
             ctx.clearRect(0, 0, width, height)
-            //绘制点击点
-            Draw.drawNodes(ctx, clickNodes,clickNodeRadius, 1, "blue", "blue",false)
-            //绘制控制点
-//            Draw.drawNodes(ctx, controlNodes, 4, )
-            Draw.drawNodes(ctx, controlNodes,controlNodeRadius, 1, "green", "green",false)
-            //绘制bezier曲线
-            var bezierNodes = Util.getBezier(controlNodes);
+            Draw.drawNodes(ctx, clickNodes,clickNodeRadius, 1, "blue", "blue",false)//绘制点击点
+            Draw.drawNodes(ctx, controlNodes,controlNodeRadius, 1, "green", "green",false)//绘制控制点
+            var bezierNodes = Util.getBezier(controlNodes);//绘制bezier曲线
             Draw.drawLine(ctx, bezierNodes, 1, "red")
-            Draw.drawNodes(ctx, keyNodes, keyNodeRadius, 2, "blue", "red", true)
+            Draw.drawNodes(ctx, keyNodes, keyNodeRadius, 2, "blue", "red", true)//绘制关键点
         }//paint
-
         MouseArea{ //鼠标操作
             id:mouseArea
             anchors.fill: parent
@@ -62,8 +50,6 @@ Window {
                 parent.clickon = new Date().getTime()//鼠标单击时候的时间戳
                 parent.currentNodeX = mouseX
                 parent.currentNodeY = mouseY
-                console.log("click on " + parent.clickon)
-
                 parent.clickNodes.forEach(function(item, index){
                     var absX = Math.abs(item.x - mouseX)
                     var absY = Math.abs(item.y - mouseY)
@@ -71,11 +57,8 @@ Window {
                     {
                         parent.isDragNode = true
                         parent.dragIndex = index //拖拽点的id
-                        console.log("drag index is " + index)
-
                     }
                 })
-
             }// onPress
             onReleased: {// 释放鼠标时的操作
                 if(parent.isDragNode)//拖动鼠标时，移动对应的点
@@ -87,17 +70,13 @@ Window {
                         parent.controlNodes = Util.calFourControlPoint(parent.clickNodes, offset.value * 10)
 
                     }
-
                     parent.requestPaint()//完成拖拽后绘制拖拽后的点
                 }
                 if(parent.isMultiBezier || (parent.isFourBezier && parent.num < 2))
                 {
-
                     parent.clickoff = new Date().getTime()//鼠标释放时刻的时间戳
-                    console.log("click off " + parent.clickoff )
                     if(!parent.isDragNode)//没有拖拽操作的时候增减新的点击点
                     {
-                        console.log(parent.clickoff - parent.clickon)
                         if(parent.clickoff - parent.clickon < 200)
                         {
                             parent.num++
@@ -105,28 +84,21 @@ Window {
                                                        y:parent.currentNodeY,
                                                        yaw:0
                                                    })
-                            console.log("add common point")
                             parent.requestPaint()
                         }
                         else{
                             parent.num++
                             var yaw =Math.atan2(mouseY- canvas.currentNodeY, mouseX - canvas.currentNodeX)
                             yaw = Util.getYaw(yaw)
-                            console.log("yaw = " + yaw)
 
                             parent.clickNodes.push({x:parent.currentNodeX,
                                                        y:parent.currentNodeY,
                                                        yaw:yaw
                                                    })
                             parent.requestPaint()
-                            console.log("add point with yaw")
                         }
                     }
-
                 }
-
-
-
                 if(parent.isMultiBezier && !parent.isFourBezier)
                 {
                     parent.controlNodes = parent.clickNodes
@@ -137,7 +109,6 @@ Window {
                 }
                 else if(parent.isFourBezier && !parent.isMultiBezier)
                 {
-                    console.log("in isFourBezier")
                     if(parent.num < 2)
                     {
                         return;
@@ -145,12 +116,10 @@ Window {
                     parent.controlNodes = Util.calFourControlPoint(parent.clickNodes, offset.value * 10)
                     parent.keyNodes = parent.clickNodes
                 }
-
                 parent.isDrag = false
                 parent.isDragNode = false
                 parent.requestPaint()
             }
-
        //onRelease
         }//MouseArea
 
@@ -165,7 +134,6 @@ Window {
             anchors.topMargin: 19
             onClicked: {
                 parent.isFourBezier = !parent.isFourBezier
-                console.log(parent.isFourBezier)
                 if(parent.isFourBezier)
                 {
                     text=qsTr("drawFourBezier")
@@ -173,13 +141,9 @@ Window {
                 else
                 {
                     text=qsTr("fourBezier")
-
                 }
-                console.log(parent.num)
-
             }
         }
-
         Button {
             id: clearBtn
             x: 524
@@ -197,7 +161,6 @@ Window {
                 parent.requestPaint()
             }
         }
-
         Button {
             id: multiBezierBtn
             x: 524
@@ -209,7 +172,6 @@ Window {
             anchors.topMargin: 74
             onClicked: {
                 parent.isMultiBezier = !parent.isMultiBezier
-                console.log(parent.isMultiBezier)
                 if(parent.isMultiBezier)
                 {
                     text=qsTr("drawMultiBezier")
@@ -219,7 +181,6 @@ Window {
                     text=qsTr("multiBezier")
 
                 }
-
             }
         }
         Slider {
@@ -238,13 +199,9 @@ Window {
                     {
                         return
                     }
-
                     parent.controlNodes = Util.calFourControlPoint(parent.clickNodes, value * 10)
                     parent.requestPaint()
-
                 }
-
-
             }
         }
     }//Canvas
